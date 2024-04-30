@@ -7,6 +7,9 @@ resource "azurerm_resource_group" "rg" {
   name     = random_pet.rg_name.id
 }
 
+
+
+
 # Create virtual network
 resource "azurerm_virtual_network" "my_terraform_network" {
   name                = "${var.resource_name_prefix}Vnet"
@@ -24,7 +27,7 @@ resource "azurerm_subnet" "my_terraform_subnet" {
 }
 
 # Create subnet2
-resource "azurerm_subnet" "my_terraform_subnet" {
+resource "azurerm_subnet" "my_terraform_subnet2" {
   name                 = "${var.resource_name_prefix}Subnet2"
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.my_terraform_network.name
@@ -101,9 +104,10 @@ resource "azurerm_storage_account" "my_storage_account" {
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
-  count                 = var.disater_recovery_copies
-  name                  = "${var.resource_name_prefix}-${element(random_pet_rg_name.*.id"
-  location              = azurerm_resource_group.rg.location
+  count                  =var.disaster_recovery_copies
+ 
+  name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM"
+   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
   size                  = "Standard_DS1_v2"
@@ -135,13 +139,17 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
 }
 
 
+
+
 # Create virtual machine  2
-resource "azurerm_linux_virtual_machine" "my_terraform_vm2" {
-  count                 = var.disater_recovery_copies
-  name                  = "${var.resource_name_prefix}-${element(random_pet_rg_name.*.id"
+resource "azurerm_windows_virtual_machine" "my_terraform_vm2" {
+  
+  count                 =var.disaster_recovery_copies
+   name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM2"
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
+  #subnet_id             = azurerm_resource_group.subnet2.id 
   size                  = "Standard_DS1_v2"
 
   os_disk {
@@ -157,17 +165,20 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm2" {
     version   = "latest"
   }
 
-  computer_name  = "hostname"
+computer_name  = "hostname"
   admin_username = var.username
+  admin_password = "azure1234"
 
-  admin_ssh_key {
-    username   = var.username
-    public_key = jsondecode(azapi_resource_action.ssh_public_key_gen.output).publicKey
-  }
+  #admin_ssh_key {
+   # username   = var.username
+    #public_key = jsondecode(azapi_resource_action.ssh_public_key_gen.output).publicKey
+  #}
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint
   }
 }
+
+
 
 
