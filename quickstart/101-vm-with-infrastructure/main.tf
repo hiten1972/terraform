@@ -1,6 +1,13 @@
+#resource "random_pet" "rg_name" {
+ # prefix = var.resource_group_name_prefix
+#}
+
 resource "random_pet" "rg_name" {
-  prefix = var.resource_group_name_prefix
+  length    = 2
+  separator = "-"
 }
+
+
 
 resource "azurerm_resource_group" "rg" {
   location = var.resource_group_location
@@ -105,8 +112,9 @@ resource "azurerm_storage_account" "my_storage_account" {
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   count                  =var.disaster_recovery_copies
- 
-  name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM"
+ name = "${var.resource_name_prefix}-${random_pet.rg_name.id}-VM"
+
+  #name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM"
    location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
@@ -117,6 +125,11 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
   }
+
+
+
+
+
 
   source_image_reference {
     publisher = "Canonical"
@@ -145,7 +158,9 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
 resource "azurerm_windows_virtual_machine" "my_terraform_vm2" {
   
   count                 =var.disaster_recovery_copies
-   name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM2"
+name = "${var.resource_name_prefix}-${random_pet.rg_name.id}-VM2"
+
+  # name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM2"
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
@@ -154,25 +169,27 @@ resource "azurerm_windows_virtual_machine" "my_terraform_vm2" {
 
   os_disk {
     name                 = "${var.resource_name_prefix}OsDisk"
-    caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
+   caching              = "ReadWrite"
+   
+     storage_account_type = "Premium_LRS"
   }
 
+  
   source_image_reference {
-    publisher = "MicrosoftWindowServer"
-    offer     = "WindowsServer"
-    sku       = "2019-datacenter"
-    version   = "latest"
-  }
+     offer = "windowsserverupgrade"
+    publisher = "MicrosoftWindowsServer"
+    sku = "server2019upgrade"
+    version ="17763.5458.240206"
+
+}
+
+
 
 computer_name  = "hostname"
   admin_username = var.username
   admin_password = "azure1234"
 
-  #admin_ssh_key {
-   # username   = var.username
-    #public_key = jsondecode(azapi_resource_action.ssh_public_key_gen.output).publicKey
-  #}
+  
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint

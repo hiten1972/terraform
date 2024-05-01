@@ -36,3 +36,11 @@ variable "disaster_recovery_copies" {
    default    =  1
 
 }
+
+
+
+variable "lun" {
+   type       = number
+   default    =  0
+
+}
