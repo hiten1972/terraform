@@ -37,6 +37,12 @@ variable "disaster_recovery_copies" {
 
 }
 
+variable "storage_account_count" {
+   type       = number
+   default    =  0
+
+}
+
 
 
 variable "lun" {

@@ -102,17 +102,20 @@ resource "random_id" "random_id" {
 
 # Create storage account for boot diagnostics
 resource "azurerm_storage_account" "my_storage_account" {
+
+
   name                     = "diag${random_id.random_id.hex}"
   location                 = azurerm_resource_group.rg.location
   resource_group_name      = azurerm_resource_group.rg.name
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  count                 = var.disaster_recovery_copies
+
 }
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
-  count                  =var.disaster_recovery_copies
- name = "${var.resource_name_prefix}-${random_pet.rg_name.id}-VM"
+   name = "${var.resource_name_prefix}-${random_pet.rg_name.id}-VM"
 
   #name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM"
    location              = azurerm_resource_group.rg.location
@@ -147,7 +150,10 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   }
 
   boot_diagnostics {
-    storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint
+   storage_account_uri = azurerm_storage_account.my_storage_account[0].primary_blob_endpoint
+
+
+
   }
 }
 
@@ -157,7 +163,7 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
 # Create virtual machine  2
 resource "azurerm_windows_virtual_machine" "my_terraform_vm2" {
   
-  count                 =var.disaster_recovery_copies
+  
 name = "${var.resource_name_prefix}-${random_pet.rg_name.id}-VM2"
 
   # name                  = "${var.resource_name_prefix}${random_pet.rg_name}VM2"
@@ -166,35 +172,37 @@ name = "${var.resource_name_prefix}-${random_pet.rg_name.id}-VM2"
   network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
   #subnet_id             = azurerm_resource_group.subnet2.id 
   size                  = "Standard_DS1_v2"
+computer_name  = "hostname"
+  admin_username = var.username
+admin_password        = "Password1234!"
 
-  os_disk {
-    name                 = "${var.resource_name_prefix}OsDisk"
-   caching              = "ReadWrite"
-   
-     storage_account_type = "Premium_LRS"
-  }
 
   
-  source_image_reference {
-     offer = "windowsserverupgrade"
-    publisher = "MicrosoftWindowsServer"
-    sku = "server2019upgrade"
-    version ="17763.5458.240206"
+ os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
 
+
+source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2019-Datacenter"
+    version   = "latest"
 }
 
 
-
-computer_name  = "hostname"
-  admin_username = var.username
-  admin_password = "azure1234"
 
   
 
   boot_diagnostics {
-    storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint
+ storage_account_uri = azurerm_storage_account.my_storage_account[0].primary_blob_endpoint
+
   }
 }
+
+
+
 
 
 
